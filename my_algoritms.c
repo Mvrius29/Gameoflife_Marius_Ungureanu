@@ -1,6 +1,6 @@
 #include "my_algoritms.h"
 
-//task1 
+//Task1 
 
 void verificare_alocare(const void  *p)
 {
@@ -48,13 +48,87 @@ void verificare_celule_vecine(char **matrice, int linie, int coloana, int nr_lin
     verificare_vecin(matrice, linie + 1, coloana + 1, nr_linii, nr_coloane, vii);
 }
 
-void modificare_si_scriere_matrice(char ***matrice,char **matrice_modificata,int lini,FILE *fisier_output)
+void scriere_matrice_in_fisier(char ***matrice,char **matrice_modificata,int lini,FILE *fisier_output)
 {
     for (int i = 0; i < lini; i++)
     {
         fprintf(fisier_output, "%s", matrice_modificata[i]);
         strcpy((*matrice)[i], matrice_modificata[i]);
         fprintf(fisier_output, "\n");
+    }
+}
+
+void modificare_matrice(char ***matrice,char **matrice_modificata,int lini)
+{
+    for (int i = 0; i < lini; i++)
+        strcpy((*matrice)[i], matrice_modificata[i]);
+}
+
+//Task2 algoritimi necesari pentru liste si stiva
+
+void creare_lista(Lista **lst, int linie, int coloana)
+{
+    (*lst) = malloc(sizeof(Lista));
+    verificare_alocare(*lst);
+    (*lst)->linie = linie;
+    (*lst)->coloana = coloana;
+    (*lst)->next = NULL;
+}
+
+void adaugare_elem_lista(Lista *lst, int linie, int coloana)
+{
+
+    Lista *new = malloc(sizeof(Lista));
+    verificare_alocare(new);
+    new->linie = linie;
+    new->coloana = coloana;
+    new->next = NULL;
+    Lista *aux = lst;
+    while (aux->next != NULL)
+        aux = aux->next;
+    aux->next = new;
+}
+
+void push_stiva(Stiva **top, Lista *lst)
+{
+        Stiva *nod = malloc(sizeof(Stiva));
+        verificare_alocare(nod);
+        nod->head_list = lst;
+        (nod)->next = (*top);
+        (*top) = nod;
+}
+
+void scriere_stiva_in_fisier(Stiva *top, FILE *fisier_output, int generatie)
+{
+    Lista *iter = NULL;
+    fprintf(fisier_output, "%d", generatie);
+    iter = top->head_list;
+    while (iter != NULL)
+    {   
+        fprintf(fisier_output, " %d %d", iter->linie, iter->coloana);
+        iter = iter->next;
+    }
+    fprintf(fisier_output, "\n");
+}
+
+void eliberare_memorie_stiva(Stiva **top)
+{
+    Stiva *iter=NULL;
+    Lista *aux=NULL,*aux1=NULL;
+    while((*top)!=NULL)
+    {
+        iter=(*top);
+        aux=iter->head_list;
+        while(aux!=NULL)
+        {
+            aux1=aux;
+            aux=aux->next;
+            free(aux1);
+            aux1=NULL;
+        }
+        (*top)=(*top)->next;
+        free(iter);
+        iter=NULL;
     }
 }
 
