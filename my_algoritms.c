@@ -111,24 +111,98 @@ void scriere_stiva_in_fisier(Stiva *top, FILE *fisier_output, int generatie)
     fprintf(fisier_output, "\n");
 }
 
+
+void eliberare_mem_lista(Lista **lst)
+{
+    Lista *aux = NULL;
+    
+    while((*lst) != NULL)
+    {
+        aux = (*lst);
+        (*lst) = (*lst) ->next;
+        free(aux);
+        aux = NULL;
+    }
+}
+
 void eliberare_memorie_stiva(Stiva **top)
 {
     Stiva *iter=NULL;
-    Lista *aux=NULL,*aux1=NULL;
+    Lista *aux=NULL;
     while((*top)!=NULL)
     {
         iter=(*top);
         aux=iter->head_list;
-        while(aux!=NULL)
-        {
-            aux1=aux;
-            aux=aux->next;
-            free(aux1);
-            aux1=NULL;
-        }
+        eliberare_mem_lista(&aux);
         (*top)=(*top)->next;
         free(iter);
         iter=NULL;
+    }
+}
+
+///Task3 functii necesare
+
+Node* createNode(Lista *lst)
+{
+    Node *new = malloc(sizeof(Node));
+    verificare_alocare(new);
+    
+    new->head_list = lst;
+    new->left = new->right=NULL;
+    return new;
+}
+
+Node *create_Root(char **matrice, int lini, int coloane, FILE *fisier_output)
+{
+    Lista *lst = NULL;
+    Node *root = NULL;
+    for (int i = 0; i < lini; i++)
+    {
+        for (int j = 0; j < coloane; j++)
+        {
+            if (matrice[i][j] == 'X')
+            {
+                if (lst == NULL)
+                   {
+                    creare_lista(&lst,i,j);
+                    root = createNode(lst);
+                   }
+                else
+                    adaugare_elem_lista(root->head_list, i, j);
+            }
+        }
+        fprintf(fisier_output, "%s\n", matrice[i]);
+    }
+    fprintf(fisier_output,"\n");
+    return root;
+}
+
+void scriere_matrice_nod_in_fisier1(char **matrice,int lini,FILE *fisier_output)
+{
+    for (int i = 0; i < lini; i++)
+        fprintf(fisier_output, "%s\n",matrice[i]);
+    fprintf(fisier_output,"\n");
+}
+
+void eliberare_mem_matrice(char ***matrice,int lini)
+{
+    for(int i=0;i<lini;i++)
+      free((*matrice)[i]);
+    free(*matrice);
+}
+
+
+void eliberare_mem_arbore(Node **root)
+{
+    if((*root) != NULL)
+    {
+        eliberare_mem_arbore(&(*root)->left);
+        eliberare_mem_arbore(&(*root)->right); 
+
+        Lista *aux = (*root)->head_list;
+        eliberare_mem_lista(&aux);
+        free((*root));
+        (*root) = NULL;      
     }
 }
 
