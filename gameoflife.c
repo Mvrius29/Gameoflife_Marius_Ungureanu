@@ -1,27 +1,6 @@
 #include "my_algoritms.h"
 
-void citire_date(char ***matrice, int *nr_task, int *nr_generatii, int *lini, int *coloane, char **argv)
-{
-    int contor_linie_matrice = 0;
-    FILE *fisier_input = NULL;
-    verificare_alocare(fisier_input = fopen(argv[1], "rt"));
-
-    fscanf(fisier_input, "%d", nr_task);
-    fscanf(fisier_input, "%d%d", lini, coloane);
-    fscanf(fisier_input, "%d", nr_generatii);
-    fgetc(fisier_input);
-
-    alocare_memorie_matrice(matrice, *lini, *coloane);
-    int cnt = *lini;
-    while (cnt)
-    {
-        fscanf(fisier_input, "%150s", (*matrice)[contor_linie_matrice]);
-        contor_linie_matrice++;
-        cnt--;
-    }
-    fclose(fisier_input);
-}
-
+// Task 1 + 2
 void generare_matrici(char ***matrice, int lini, int coloane, int nr_generatii, char **argv, int nr_task, Stiva **top)
 {
     FILE *fisier_output = NULL;
@@ -73,11 +52,11 @@ void generare_matrici(char ***matrice, int lini, int coloane, int nr_generatii, 
                     {
                         if (lst == NULL)
                         {
-                            creare_lista(&lst, i, j);
+                            adaugare_elem_lista(&lst, i, j);
                             push_stiva(top, lst);
                         }
                         else
-                            adaugare_elem_lista(lst, i, j);
+                            adaugare_elem_lista(&lst, i, j);
                     }
                 }
             }
@@ -94,12 +73,13 @@ void generare_matrici(char ***matrice, int lini, int coloane, int nr_generatii, 
         generatie_curenta++;
     }
 
-    eliberare_mem_matrice(matrice, lini);
-    eliberare_mem_matrice(&matrice_modificata, lini);
+    eliberare_mem_matrice_char(matrice, lini);
+    eliberare_mem_matrice_char(&matrice_modificata, lini);
 
     fclose(fisier_output);
 }
 
+/// Crearea arborerului pentru task 3 si task 4
 void generare_arbore_recursiv(char **matrice, Node *root, int lini, int coloane, int nr_generatii, FILE *fisier_output)
 {
     if (root != NULL && nr_generatii > 0)
@@ -109,9 +89,9 @@ void generare_arbore_recursiv(char **matrice, Node *root, int lini, int coloane,
         alocare_memorie_matrice(&matrice_regula_B, lini, coloane);
         alocare_memorie_matrice(&matrice_regula_initiala, lini, coloane);
 
-        int nr_vecini_vii = 0, transformare_regula_initiala;
+        int nr_vecini_vii = 0;
         int conditie1_vii = 2, conditie2_vii = 3, conditie1_dead = 3;
-        int conditie_B = 2, transformare_regula_B;
+        int conditie_B = 2;
 
         Lista *lst_initial = NULL, *lst_regula_B = NULL;
 
@@ -119,16 +99,15 @@ void generare_arbore_recursiv(char **matrice, Node *root, int lini, int coloane,
         {
             for (int j = 0; j < coloane; j++)
             {
-                transformare_regula_initiala = 0;
-                transformare_regula_B = 0;
 
                 verificare_celule_vecine(matrice, i, j, lini, coloane, &nr_vecini_vii);
                 if (matrice[i][j] == 'X')
                 {
-                    if (nr_vecini_vii < conditie1_vii)
-                        matrice_regula_initiala[i][j] = '+', transformare_regula_initiala++;
-                    else if (nr_vecini_vii > conditie2_vii)
-                        matrice_regula_initiala[i][j] = '+', transformare_regula_initiala++;
+                    if (nr_vecini_vii < conditie1_vii || nr_vecini_vii > conditie2_vii)
+                    {
+                        matrice_regula_initiala[i][j] = '+';
+                        adaugare_elem_lista(&lst_initial, i, j);
+                    }
                     else
                         matrice_regula_initiala[i][j] = 'X';
                     matrice_regula_B[i][j] = 'X';
@@ -136,52 +115,82 @@ void generare_arbore_recursiv(char **matrice, Node *root, int lini, int coloane,
                 else
                 {
                     if (nr_vecini_vii == conditie1_dead)
-                        matrice_regula_initiala[i][j] = 'X', transformare_regula_initiala++;
+                        matrice_regula_initiala[i][j] = 'X', adaugare_elem_lista(&lst_initial, i, j);
                     else
                         matrice_regula_initiala[i][j] = '+';
 
                     if (nr_vecini_vii == conditie_B)
-                        matrice_regula_B[i][j] = 'X', transformare_regula_B++;
+                        matrice_regula_B[i][j] = 'X', adaugare_elem_lista(&lst_regula_B, i, j);
                     else
                         matrice_regula_B[i][j] = '+';
-                }
-                if (transformare_regula_B)
-                {
-                    if (lst_regula_B == NULL)
-                        creare_lista(&lst_regula_B, i, j);
-                    else
-                        adaugare_elem_lista(lst_regula_B, i, j);
-                }
-                if (transformare_regula_initiala)
-                {
-                    if (lst_initial == NULL)
-                        creare_lista(&lst_initial, i, j);
-                    else
-                        adaugare_elem_lista(lst_initial, i, j);
                 }
             }
         }
         nr_generatii--;
 
-        scriere_matrice_nod_in_fisier1(matrice_regula_B, lini, fisier_output);
         root->left = createNode(lst_regula_B);
         generare_arbore_recursiv(matrice_regula_B, root->left, lini, coloane, nr_generatii, fisier_output);
 
-        scriere_matrice_nod_in_fisier1(matrice_regula_initiala, lini, fisier_output);
         root->right = createNode(lst_initial);
         generare_arbore_recursiv(matrice_regula_initiala, root->right, lini, coloane, nr_generatii, fisier_output);
 
-        eliberare_mem_matrice(&matrice_regula_B, lini);
-        eliberare_mem_matrice(&matrice_regula_initiala, lini);
+        eliberare_mem_matrice_char(&matrice_regula_B, lini);
+        eliberare_mem_matrice_char(&matrice_regula_initiala, lini);
     }
 }
 
+/// task3 scriere in fisier
+void preordine(Node *root, char **matrice, int lini, int coloane, FILE *fisier_output, int cnt)
+{
+    if (root == NULL)
+        return;
+    if (cnt == 0)
+    {
+        cnt++;
+        preordine(root->left, matrice, lini, coloane, fisier_output, cnt);
+        preordine(root->right, matrice, lini, coloane, fisier_output, cnt);
+    }
+    else
+    {
+        char **matrice_modificata = genereare_matrice_nod(matrice, lini, coloane, root);
+        scriere_matrice_nod_in_fisier1(matrice_modificata, lini, fisier_output);
+
+        preordine(root->left, matrice_modificata, lini, coloane, fisier_output, cnt);
+        preordine(root->right, matrice_modificata, lini, coloane, fisier_output, cnt);
+
+        eliberare_mem_matrice_char(&matrice_modificata, lini);
+    }
+}
+/// task 4
+void determinare_drumuri_hamiltoniene(Node *root, char **matrice, int lini, int coloane, FILE *fisier_output, int cnt)
+{
+    if (root == NULL)
+        return;
+    if (cnt == 0)
+    {
+        scriere_drum_hamiltonian_in_fisier(matrice, lini, coloane, fisier_output);
+        cnt++;
+
+        determinare_drumuri_hamiltoniene(root->left, matrice, lini, coloane, fisier_output, cnt);
+        determinare_drumuri_hamiltoniene(root->right, matrice, lini, coloane, fisier_output, cnt);
+    }
+    else
+    {
+        char **matrice_modificata = genereare_matrice_nod(matrice, lini, coloane, root);
+        scriere_drum_hamiltonian_in_fisier(matrice_modificata, lini, coloane, fisier_output);
+
+        determinare_drumuri_hamiltoniene(root->left, matrice_modificata, lini, coloane, fisier_output, cnt);
+        determinare_drumuri_hamiltoniene(root->right, matrice_modificata, lini, coloane, fisier_output, cnt);
+
+        eliberare_mem_matrice_char(&matrice_modificata, lini);
+    }
+}
 int main(int argc, char **argv)
 {
     Stiva *top = NULL;
     char **matrice = NULL;
     int nr_task = 0, lini = 0, coloane = 0, nr_generatii = 0;
-     
+
     citire_date(&matrice, &nr_task, &nr_generatii, &lini, &coloane, argv);
 
     if (nr_task == 1 || nr_task == 2)
@@ -192,10 +201,11 @@ int main(int argc, char **argv)
             eliberare_memorie_stiva(&top);
     }
 
-    if (nr_task == 3)
+    if (nr_task == 3 || nr_task == 4)
     {
         Node *root = NULL, *root1 = NULL;
         FILE *fisier_output = NULL;
+        int cnt = 0;
 
         verificare_alocare(fisier_output = fopen(argv[2], "wt"));
 
@@ -203,9 +213,13 @@ int main(int argc, char **argv)
         root1 = root;
 
         generare_arbore_recursiv(matrice, root1, lini, coloane, nr_generatii, fisier_output);
+        if (nr_task == 3)
+            preordine(root, matrice, lini, coloane, fisier_output, cnt);
+        else
+            determinare_drumuri_hamiltoniene(root1, matrice, lini, coloane, fisier_output, cnt);
 
         fclose(fisier_output);
         eliberare_mem_arbore(&root);
-        eliberare_mem_matrice(&matrice, lini);
+        eliberare_mem_matrice_char(&matrice, lini);
     }
 }
